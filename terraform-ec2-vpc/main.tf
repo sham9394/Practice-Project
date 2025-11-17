@@ -99,7 +99,9 @@ resource "aws_instance" "server1" {
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.all_access.id]
   associate_public_ip_address = true
-
+  user_data_replace_on_change = true
+  # Load local install.sh into user_data
+  user_data = templatefile("${path.module}/scripts/install.sh", {})
   root_block_device {
     volume_size = var.server1_volume
   }
@@ -108,7 +110,6 @@ resource "aws_instance" "server1" {
     Name = "Jenkins-Ansible-Server"
   }
 }
-
 resource "aws_instance" "server2" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -154,12 +155,7 @@ resource "aws_instance" "server4" {
   root_block_device {
     volume_size = var.server4_volume
   }
-  user_data = <<-EOF
-    #!/bin/bash
-    curl -o /tmp/install.sh https://raw.githubusercontent.com/sham9394/Ansible_Scripts/main/install-jenkins-ansible.sh
-    chmod +x /tmp/install.sh
-    /tmp/install.sh
-  EOF
+  
   tags = {
     Name = "Node2-Server"
   }
