@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+
+    environment {
+        INVENTORY = "inventory.ini"
+        PLAYBOOK  = "k8s-cluster.yml"
+        REPO_URL  = "https://github.com/yourusername/k8s-ansible-cluster.git"
+        SCRIPT    = "https://raw.githubusercontent.com/sham9394/Ansible_Scripts/refs/heads/main/install-ansible.sh"
+        SSH_KEY   = "~/.ssh/id_rsa"
+        MASTER    = "master1"
+    }
+
+    options {
+        ansiColor('xterm')
+    }
+
+    stages {
+
+        stage('Cleanup Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Clone GitHub Repository') {
+            steps {
+                git branch: "main", url: "${REPO_URL}"
+            }
+        }
+
+        stage('Install Ansible') {
+            steps {
+                sh '''
+                    set -e
+                    echo "Installing Ansible..."
+                    curl -s "${SCRIPT}" | bash
+                '''
+            }
+        }
+
+        stage('Verify Inventory File Exists') {
+            steps {
+                sh '''
+                    if [ ! -f "${INVENTORY}" ]; then
+                        echo "ERROR: Inventory file not found!"
+                        exit 1
+                    fi
+
+                    echo "===== Inventory File ====="
+                    cat ${INVENTORY}
+                '''
+            }
+        }
+
+        stage('Run Kubernetes Playbook') {
+            steps {
+                sh '''
+                    set -e
+                    echo "Running Kubernetes Playbook..."
+                    ansible-playbook -i ${INVENTORY} ${PLAYBOOK}
+                '''
+            }
+        }
+
+        stage('Check Kubernetes Nodes') {
+            steps {
+                sh '''
+                    echo "Checking Kubernetes Cluster Status..."
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${MASTER} "kubectl get nodes -o wide"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✔ Kubernetes Cluster Deployment Completed Successfully!"
+        }
+        failure {
+            echo "❌ Playbook Failed — Check Jenkins Console Output."
+        }
+    }
+}

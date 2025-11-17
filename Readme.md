@@ -127,4 +127,4 @@ Step	Server	Tools Used	Purpose
 1	Local / Jenkins	Terraform	Create EC2 instances
 2	Jenkins + Ansible (Server 1)	Ansible	Configure Kubernetes Cluster
 3	Jenkins (Server 1)	Jenkins + Docker + Git	CI/CD Deployment
-4	Master or Monitoring Node	Prometheus + Grafana	Monitoring & Observability
+4	Master or Monitoring Node	Prometheus + Grafana	Monitoring & Observabilityyes
